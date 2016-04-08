@@ -394,6 +394,7 @@ function budgetvm_AdminCustomButtonArray()
     "Power Off"       => "powerOff",
     "Reboot"          => "powerReboot",
     "Reset Console"   => "resetConsole",
+    "Retrieve BudgetVM IP Details" => "adminUpdateDetails",
   );
 }
 
@@ -433,6 +434,25 @@ function budgetvm_ClientAreaCustomButtonArray()
  *
  * @return string "success" or an error message
  */
+ 
+ function budgetvm_adminUpdateDetails($params){
+	$ips 					= new BudgetVM_Api($params['serverpassword']);
+	$g->post->service 		= $params['customfields']['BudgetVM Service ID'];
+	$ips 					= $ips->call("v2", "network", "netblock", "get", $g);
+	foreach($ips->result as $ip=>$rdns){
+		$mainip			= $ip;
+		break;
+	}
+	$ipAddon				= "";
+	foreach($ips->result as $ip=>$rdns){
+		if($ip != $mainip){
+			$ipAddon			.= $ip . PHP_EOL;
+		}
+	}
+	
+    update_query("tblhosting",array("dedicatedip" => $mainip, "assignedips" => $ipAddon, "lastupdate"=>"now()",),array("id"=>$params["serviceid"]));
+}
+
 function budgetvm_powerOn(array $params)
 {
   try {
